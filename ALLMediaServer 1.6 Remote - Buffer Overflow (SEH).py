@@ -16,8 +16,8 @@
 # 3. - Mediaserver.exe Exploit 
 
 # Proof and Exploit:
-https://streamable.com/lwgyjs
-https://i.imgur.com/p4paL8R.png
+#https://streamable.com/lwgyjs
+#https://i.imgur.com/p4paL8R.png
 
 
 
