@@ -28,7 +28,7 @@ class MetasploitModule < Msf::Exploit::Remote
           'EXITFUNC' => 'process'
         },
         'Platform' => 'win',
-        'Arch' => [ARCH_X86],
+        'Arch' => [ARCH_X86, ARCH_X64],
         'Payload' => {
           'BadChars' => '\x00\x0a\x0d\xff'
         },
