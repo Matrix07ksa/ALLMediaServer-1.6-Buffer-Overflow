@@ -17,23 +17,18 @@ class MetasploitModule < Msf::Exploit::Remote
         'Description' => %q{
           This module exploits a stack buffer overflow leading to a SEH handler overwrite
           in ALLMediaServer 1.6. The vulnerability is caused due to a boundary error
-          within the handling of a HTTP request.
-          thanks you Saud Alenazi and 0xSaudi
+          within the handling of a HTTP request. Note that this exploit will only work
+          against x86 or WoW64 targets, x64 is not supported at this time.
         },
         'License' => MSF_LICENSE,
         'Author' => [
           'Hejap Zairy Al-Sharif', # Aka @Matrix07ksa. Remote exploit and Metasploit module
         ],
-         'References'     =>
-        [
-          [ 'CVE', '2022-28381' ],
-          ['URL','https://github.com/Matrix07ksa/ALLMediaServer-1.6-Buffer-Overflow']
-        ],
         'DefaultOptions' => {
           'EXITFUNC' => 'process'
         },
         'Platform' => 'win',
-        'Arch' => [ARCH_X86, ARCH_X64],
+        'Arch' => [ARCH_X86],
         'Payload' => {
           'BadChars' => '\x00\x0a\x0d\xff'
         },
@@ -49,6 +44,10 @@ class MetasploitModule < Msf::Exploit::Remote
         'Privileged' => false,
         'DisclosureDate' => '2022-04-01',
         'DefaultTarget' => 0,
+        'References' => [
+          ['CVE', '2022-28381'],
+          ['URL', 'https://github.com/Matrix07ksa/ALLMediaServer-1.6-Buffer-Overflow']
+        ],
         'Notes' => {
           'Stability' => [CRASH_SERVICE_DOWN], # If this fails the service will go down and will not restart.
           'Reliability' => [REPEATABLE_SESSION],
@@ -74,4 +73,3 @@ class MetasploitModule < Msf::Exploit::Remote
     disconnect
   end
 end
-
